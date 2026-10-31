@@ -19,7 +19,13 @@ Reviewed 27 October 2026. Scope: local Hilltop source, dependencies and automate
 | Static files    | Production exposes compiled client/dist only. Private sibling files, dotfiles and source stay inaccessible; unknown APIs remain JSON 404. A missing build fails explicitly.                                                                                                         |
 | Secrets/errors  | Only a blank .env.example is supplied. Environment files/logs/builds/coverage are ignored. Error responses hide stacks; startup masks Mongo URI errors. No actual credentials were found in app source.                                                                             |
 
-The 27 October lockfile audit reported **0 advisories** across production and development dependencies. Rerun `npm audit --audit-level=low` after dependency changes and before release. A clean audit does not prove application security.
+The 27 October lockfile audit reported **0 advisories** at that time. Rechecking on 31 October found new advisories in Jest's development dependencies. `glob` and `minimatch` are now overridden to patched 14.0.3+ and 11.0.3+ releases; coverage tests validate compatibility. Production dependencies report **zero advisories**. Raw `npm audit` still reports the specific unpatched development finding below and its transitive impact; a completely clean full-tree audit is not claimed.
+
+### Reviewed development-only exception
+
+[GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4) affects `deepmerge` 4.2.0–4.3.1 and has no published patched version as of 31 October 2026. Here it is reachable through Jest configuration tooling, not the production server/frontend dependency tree. Prototype poisoning is a risk when merging attacker-controlled configuration; this project uses checked-in trusted Jest configuration and does not accept external test configuration from guests. CI has no Atlas/staff secrets and read-only repository contents permission.
+
+`npm run security:check` first requires a zero-advisory production tree, then permits only this exact low-severity `deepmerge` advisory in the development audit. Every other advisory or unresolved audit error fails the check. This is a documented scoped exception, not a claim that the package is patched or a general low-severity suppression. Review upstream releases at the next dependency update and remove the exception once a compatible fix exists. No forced downgrade to obsolete Jest was used. Other tooling fixes: [glob advisory](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4), [minimatch advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 
 ## Limits and launch decisions
 
@@ -33,6 +39,6 @@ The 27 October lockfile audit reported **0 advisories** across production and de
 
 ## Repeat verification
 
-Run `npm run test:coverage`, `npm run build`, `npm run test:performance`, `npm run format:check` and `npm audit --audit-level=low`. Tests/load checks use disposable local databases and never import .env. Performance requires a built frontend. Provision agents privately; never put real credentials in tests or commit history.
+Run `npm run test:coverage`, `npm run build`, `npm run test:performance`, `npm run format:check`, `npm audit` and `npm run security:check`. Raw audit exposes the reviewed finding; the security check enforces its exact scope. Tests/load checks use disposable local databases and never import .env. Performance requires a built frontend. Provision agents privately; never put real credentials in tests or commit history.
 
 Reference behavior: [Express static middleware](https://expressjs.com/en/resources/middleware/serve-static/), [Socket.io reverse proxies](https://socket.io/docs/v4/reverse-proxy/) and [Socket.io adapters](https://socket.io/docs/v4/adapter/).

@@ -6,7 +6,7 @@ Owner-confirmed scope: demo project. Hotel contacts, support availability and re
 
 Guest registration/sign-in, support conversations, transactional REST/Socket.io messages, retry deduplication, reconnection recovery, private agent assignment/inbox, durable unread markers, closure and history search/date filtering/pagination are implemented. Guest/agent views support mobile layouts. No permanent demo credentials are shipped.
 
-Latest run: **180 automated tests** (160 server, 20 React), **94.87% server line coverage**, **99.04% route-file line coverage**, build/formatting pass and zero dependency advisories. Coverage includes models, middleware, routes, services, HTTP setup and realtime code; the process startup entry is excluded. This does not mean every branch or real Atlas behavior was tested. See [security review](SECURITY.md) and [performance report](PERFORMANCE.md).
+The suite contains **181 automated tests** (160 server, 21 React), with a backend baseline of **94.87% line coverage** and **99.04% route-file line coverage**. Production dependency audit reports zero advisories; the development-only unpatched Jest/deepmerge advisory is documented and narrowly excepted by `npm run security:check`. Coverage includes models, middleware, routes, services, HTTP setup and realtime code; process startup is excluded. See [security review](SECURITY.md) and [performance report](PERFORMANCE.md).
 
 ## Run and acceptance
 
@@ -16,7 +16,7 @@ Latest run: **180 automated tests** (160 server, 20 React), **94.87% server line
 4. Use separate browser profiles for guest and agent. Create a guest/chat, claim it, exchange messages both ways, disconnect/reconnect and check saved recovery without duplicates.
 5. Confirm another guest/agent cannot access assigned history. Switch chats for draft/unread behavior. Search by keyword/date, paginate, receive a live message and explicitly refresh results.
 6. Close the chat, confirm sends stop on both sides, sign out and verify existing sessions lose access. Check mobile widths and keyboard access.
-7. Run `npm run test:coverage`, `npm run build`, `npm run test:performance`, `npm run format:check` and `npm audit --audit-level=low`. These tests use disposable databases, not the private Atlas URI.
+7. Run `npm run test:coverage`, `npm run build`, `npm run test:performance`, `npm run format:check` and `npm run security:check`. These tests use disposable databases, not the private Atlas URI. Raw `npm audit` remains available and reports the documented development-only exception.
 
 ## Production build preparation — no deployment performed
 

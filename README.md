@@ -12,7 +12,7 @@ Task 3 is implemented: a dedicated responsive agent inbox with waiting/own-activ
 
 Task 4 is implemented: participant-scoped keyword/date history filters, validated UTC calendar ranges, maximum 20 results per page, stable upper-bound pagination and a responsive read-only search view in the agent inbox. Live/recovered messages flag an explicit refresh without silently changing filtered pages or clearing unread state. API, component and isolated real-browser checks cover the behavior.
 
-Task 5 local checks are implemented: regression/coverage gates, repeatable isolated load checks, security review, production frontend serving, a GitHub CI workflow and handover documentation. The latest local run passed 180 tests, build/formatting and dependency audit (zero advisories). Server line coverage is 94.87%; route-file line coverage is 99.04%. See [performance results](docs/PERFORMANCE.md), [security review](docs/SECURITY.md) and [handover](docs/HANDOVER.md).
+Task 5 checks include regression/coverage gates, repeatable isolated load checks, security review, production frontend serving, GitHub CI and handover documentation. The suite contains 181 tests (160 server + 21 React), including a keyboard-focus regression. Server line coverage baseline is 94.87%; route-file line coverage is 99.04%. Production dependencies have zero reported advisories; one unpatched low-severity advisory in Jest-only development tooling is explicitly documented and narrowly reviewed by `security:check`. See [performance results](docs/PERFORMANCE.md), [security review](docs/SECURITY.md) and [handover](docs/HANDOVER.md).
 
 Real Hilltop Atlas API/socket **and browser acceptance** passed on 31 October 2026 against the separate `hilltop_support` database. A permanent staff account is privately provisioned. Actual guest/staff React sessions verified claim/privacy, live replies, full history, search/date/pagination, draft/unread protection, mobile navigation, closure and session restoration; temporary fixtures were cleaned. Browser evidence is in [atlas-browser-results.json](docs/atlas-browser-results.json).
 
@@ -244,9 +244,12 @@ npm run format:check
 npm run build
 npm run test:performance
 npm audit
+npm run security:check
 ```
 
-Tests start an isolated temporary MongoDB replica set; they do not load the app's `.env` or use its Atlas URI. The first run may download the MongoDB test binary. On a low-space Windows machine, set `MONGOMS_DOWNLOAD_DIR` and `TEST_DB_ROOT` to writable cache folders with sufficient space. Coverage includes server models, middleware, routes, services, HTTP setup and sockets; the process startup entry is excluded. Coverage gates require 80% statements/lines/functions and 75% branches. Latest results: 160 backend + 20 React tests passed.
+Tests start an isolated temporary MongoDB replica set; they do not load the app's `.env` or use its Atlas URI. The first run may download the MongoDB test binary. On a low-space Windows machine, set `MONGOMS_DOWNLOAD_DIR` and `TEST_DB_ROOT` to writable cache folders with sufficient space. Coverage includes server models, middleware, routes, services, HTTP setup and sockets; the process startup entry is excluded. Coverage gates require 80% statements/lines/functions and 75% branches. Current suite: 160 backend + 21 React tests.
+
+`npm audit` still reports the unpatched Jest/deepmerge development advisory and its transitive impact. `npm run security:check` independently requires zero production advisories, rejects every unreviewed development advisory and permits only the named low-severity development exception in [SECURITY.md](docs/SECURITY.md). It does not suppress unrelated future findings. Patched `glob`/`minimatch` overrides keep the test tooling's other reported issues resolved.
 
 The performance runner requires `npm run build` first. It uses 10,000 synthetic messages, actual loopback HTTP/socket traffic and a disposable replica set with no external target option. `npm run test:performance -- --report` saves a sanitized local measurement. See [PERFORMANCE.md](docs/PERFORMANCE.md) for predefined budgets, results and limitations.
 

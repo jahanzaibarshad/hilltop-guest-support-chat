@@ -33,4 +33,4 @@ jobs:
       - run: npm run test:coverage
       - run: npm run build
       - run: npm run test:performance
-      - run: npm audit --audit-level=low
+      - run: npm run security:check

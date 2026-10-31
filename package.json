@@ -18,8 +18,13 @@
     "test:coverage": "npm run test --workspace client && npm run test:coverage --workspace server",
     "test:performance": "node server/scripts/performance.js",
     "test:atlas": "node server/scripts/check-atlas.js",
+    "security:check": "node scripts/audit-dependencies.js",
     "format:check": "prettier --check .",
     "format": "prettier --write ."
+  },
+  "overrides": {
+    "glob": "^14.0.3",
+    "minimatch": "^11.0.3"
   },
   "devDependencies": {
     "concurrently": "^9.0.0",
