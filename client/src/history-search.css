@@ -1,0 +1,148 @@
+.history-search {
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+}
+.history-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+}
+.history-heading h4 {
+  margin: 8px 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+.history-heading button {
+  font-size: 11px;
+  padding: 10px 14px;
+}
+.history-heading h4:focus {
+  outline: none;
+}
+#history-help {
+  color: #63725f;
+  font-size: 11px;
+}
+.history-filter-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
+  background: #f3f3eb;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.history-filter-form label {
+  margin: 0;
+  min-width: 0;
+}
+.history-filter-form .keyword-filter,
+.history-filter-actions {
+  grid-column: 1/-1;
+}
+.history-filter-form input {
+  font-size: 14px;
+}
+.history-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.history-filter-actions button {
+  padding: 10px 16px;
+  font-size: 12px;
+}
+.history-update-notice {
+  margin: 18px 0;
+  padding: 16px;
+  border-left: 3px solid #ae8651;
+  background: #f6edd6;
+  font-size: 12px;
+}
+.history-update-notice p {
+  margin-top: 0;
+}
+.history-update-notice button {
+  font-size: 12px;
+}
+.history-result-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 11px;
+  margin: 14px 0;
+}
+.history-result-summary button {
+  font-size: 11px;
+  padding: 8px;
+}
+.history-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 520px;
+  overflow: auto;
+}
+.history-results li {
+  margin: 14px 0;
+}
+.history-results .message {
+  max-width: 100%;
+}
+.history-results p {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.history-empty {
+  padding: 30px 20px;
+  background: #f4f4ec;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 13px;
+}
+.history-empty p {
+  color: #6a7767;
+}
+.history-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  margin-top: 20px;
+}
+.history-pagination button {
+  padding: 10px 12px;
+  font-size: 11px;
+}
+.search-history-toggle {
+  margin-top: 18px;
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .history-filter-form input {
+    font-size: 16px;
+  }
+  .history-heading {
+    flex-wrap: wrap;
+  }
+  .history-results {
+    max-height: 60vh;
+  }
+  .history-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+@media (max-width: 400px) {
+  .history-filter-form {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px;
+  }
+  .history-filter-actions button {
+    width: 100%;
+  }
+}

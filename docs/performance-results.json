@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-10-27T11:06:53.790Z",
+  "environment": {
+    "node": "v20.19.4",
+    "platform": "win32",
+    "release": "10.0.22631",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+    "logicalCpus": 12,
+    "memoryGiB": 16
+  },
+  "fixture": {
+    "messages": 10000,
+    "chats": 41,
+    "mongo": "temporary single-node replica set",
+    "httpRateLimitEnabled": true,
+    "socketRateLimitEnabled": true,
+    "externalDatabaseUsed": false
+  },
+  "results": [
+    {
+      "name": "history mixed filters / 10,000 saved messages",
+      "count": 120,
+      "concurrency": 5,
+      "failures": 0,
+      "p50Ms": 40.39,
+      "p95Ms": 62.61,
+      "maxMs": 79.69,
+      "elapsedMs": 985.71,
+      "operationsPerSecond": 121.74,
+      "p95BudgetMs": 1000,
+      "passed": true
+    },
+    {
+      "name": "agent inbox / 41 assigned chats",
+      "count": 60,
+      "concurrency": 3,
+      "failures": 0,
+      "p50Ms": 21.49,
+      "p95Ms": 28.86,
+      "maxMs": 35.76,
+      "elapsedMs": 440.27,
+      "operationsPerSecond": 136.28,
+      "p95BudgetMs": 1000,
+      "passed": true
+    },
+    {
+      "name": "REST transactional sends / one contended chat",
+      "count": 30,
+      "concurrency": 3,
+      "failures": 0,
+      "p50Ms": 61.2,
+      "p95Ms": 100.86,
+      "maxMs": 113.09,
+      "elapsedMs": 613.57,
+      "operationsPerSecond": 48.89,
+      "p95BudgetMs": 2000,
+      "passed": true
+    },
+    {
+      "name": "socket send acknowledgement AND recipient delivery",
+      "count": 20,
+      "concurrency": 1,
+      "failures": 0,
+      "p50Ms": 26.01,
+      "p95Ms": 30.61,
+      "maxMs": 30.69,
+      "elapsedMs": 514.98,
+      "operationsPerSecond": 38.84,
+      "p95BudgetMs": 2000,
+      "passed": true
+    }
+  ],
+  "nodeProcess": {
+    "rssMiB": 136,
+    "eventLoopP95Ms": 26.41
+  },
+  "passed": true
+}

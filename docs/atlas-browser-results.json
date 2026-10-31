@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-10-31T13:22:46.878Z",
+  "database": "hilltop_support",
+  "browser": "Microsoft Edge headless / actual React build",
+  "checks": [
+    "real browser guest signup and chat creation",
+    "permanent staff login, private preview, atomic claim and second-agent isolation",
+    "bidirectional guest/staff live UI messaging",
+    "all 47 saved messages loaded through older-history controls",
+    "UTC keyword/date filters, 20-row pages, stable live pages, refresh and unread protection",
+    "empty/clear controls, 320/390/768/1440 layouts, mobile navigation and draft preservation",
+    "closure propagation, saved staff session/closed history after reload and guest logout"
+  ],
+  "passed": true,
+  "fixtureCleanup": "passed; temporary guest/second-agent/chat/messages removed; permanent staff preserved"
+}
