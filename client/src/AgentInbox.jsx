@@ -168,6 +168,9 @@ export default function AgentInbox({ user, onSessionExpired }) {
     };
   }, []);
   useLayoutEffect(() => {
+    if (detailVisible) detailHeading.current?.focus();
+  }, [selected?._id, detailVisible]);
+  useLayoutEffect(() => {
     const node = scroll.current;
     if (!node) return;
     if (prepend.current) {
@@ -238,7 +241,6 @@ export default function AgentInbox({ user, onSessionExpired }) {
     prepend.current = null;
     if (!isAssigned(chat, user)) {
       setLoading(false);
-      requestAnimationFrame(() => detailHeading.current?.focus());
       return;
     }
     setLoading(true);
@@ -258,7 +260,6 @@ export default function AgentInbox({ user, onSessionExpired }) {
     } finally {
       if (mounted.current && generation === version.current) {
         setLoading(false);
-        requestAnimationFrame(() => detailHeading.current?.focus());
       }
     }
   }

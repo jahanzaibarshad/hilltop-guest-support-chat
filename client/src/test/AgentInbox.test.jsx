@@ -207,6 +207,32 @@ describe('Agent inbox', () => {
       }),
     );
   });
+  it('keeps reply focus when delayed animation frames run after history loads', async () => {
+    const frames = [];
+    const animation = vi
+      .spyOn(globalThis, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        frames.push(callback);
+        return frames.length;
+      });
+    try {
+      preview();
+      const keyboard = userEvent.setup();
+      await keyboard.click(screen.getByRole('button', { name: /My active/ }));
+      await keyboard.click(await screen.findByRole('button', { name: /Extra towels/ }));
+      const textbox = await screen.findByRole('textbox', { name: 'Reply to guest' });
+      await waitFor(() => expect(textbox).toBeEnabled());
+      await keyboard.click(textbox);
+      await act(async () => {
+        for (const callback of frames.splice(0)) callback(performance.now());
+      });
+      expect(textbox).toHaveFocus();
+      await keyboard.type(textbox, 'A complete keyboard reply', { skipClick: true });
+      expect(textbox).toHaveValue('A complete keyboard reply');
+    } finally {
+      animation.mockRestore();
+    }
+  });
   it('keeps separate drafts while switching chats', async () => {
     preview();
     const click = userEvent.setup();

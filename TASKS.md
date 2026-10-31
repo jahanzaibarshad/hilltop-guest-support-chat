@@ -51,7 +51,7 @@ Source: the supplied six-page Hilltop Guest House project brief. Implement in or
 
 ## Task 5 — Tests, performance, hosting and handover
 
-- [x] API/socket/UI regression: 180 tests pass, 94.87% server line coverage and 99.04% route-file line coverage; coverage gates pass.
+- [x] API/socket/UI regression: 181 tests (160 server + 21 React), including delayed-focus keyboard regression; backend coverage baseline is 94.87% lines and 99.04% route-file lines.
 - [x] Repeatable isolated HTTP/socket load check with 10,000 saved messages; recorded results and limits in docs/PERFORMANCE.md.
 - [x] Local HTTP/socket security review, rate-limit regression, static-file boundary checks and zero-advisory dependency audit; docs/SECURITY.md records operational limits.
 - [x] Local GitHub CI workflow for formatting, coverage, build, performance and audit; no application secrets needed.
