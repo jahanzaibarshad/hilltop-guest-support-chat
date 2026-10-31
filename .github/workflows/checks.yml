@@ -16,10 +16,11 @@ jobs:
   checks:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
-    env:
-      TEST_DB_ROOT: ${{ runner.temp }}
-      MONGOMS_DOWNLOAD_DIR: ${{ runner.temp }}/mongodb-binaries
     steps:
+      - name: Configure temporary database paths
+        run: |
+          echo "TEST_DB_ROOT=$RUNNER_TEMP" >> "$GITHUB_ENV"
+          echo "MONGOMS_DOWNLOAD_DIR=$RUNNER_TEMP/mongodb-binaries" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           persist-credentials: false

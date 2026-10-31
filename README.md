@@ -18,6 +18,8 @@ Real Hilltop Atlas API/socket **and browser acceptance** passed on 31 October 20
 
 Dedicated repository: [jahanzaibarshad/hilltop-guest-support-chat](https://github.com/jahanzaibarshad/hilltop-guest-support-chat) (private; reviewers need repository access). Remote CI verification, hotel-approved contacts/policies and hosting remain pending. No live deployment URL exists yet. Deployment is deferred at the user's request. See [TASKS.md](TASKS.md).
 
+This is a **demo project**, as confirmed by the owner. Hotel contact numbers, support availability and retention/privacy policy remain explicitly **hotel approval pending**; no invented business details or automatic deletion policy is supplied.
+
 ## Requirements
 
 - Node.js 20.19+ or 22.12+ and npm.

@@ -60,7 +60,7 @@ Source: the supplied six-page Hilltop Guest House project brief. Implement in or
 - [x] Production frontend serving/build and environment instructions, including missing-build fail-fast and same-origin REST/socket setup.
 - [ ] Free-host deployment after account access and provider limits are verified.
 - [ ] Real hosted guest/agent chat check; verified live/demo links in README.
-- [ ] Approved hotel contacts/policies, privacy/retention and emergency guidance.
+- [ ] Approved hotel contacts/policies, privacy/retention and emergency guidance — explicitly deferred by the owner for this demo; keep hotel approval pending.
 - [x] Local handover with run/test/production-preparation instructions, limitations and honest submission note in docs/HANDOVER.md.
 
 Deployment is intentionally deferred. Real Atlas API/socket and browser acceptance checks pass; hotel contact/policy approval remains pending.

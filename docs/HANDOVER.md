@@ -2,6 +2,8 @@
 
 ## Ready locally
 
+Owner-confirmed scope: demo project. Hotel contacts, support availability and retention/privacy wording stay **hotel approval pending**. This does not block the agreed demo handover; a real business launch still requires those decisions.
+
 Guest registration/sign-in, support conversations, transactional REST/Socket.io messages, retry deduplication, reconnection recovery, private agent assignment/inbox, durable unread markers, closure and history search/date filtering/pagination are implemented. Guest/agent views support mobile layouts. No permanent demo credentials are shipped.
 
 Latest run: **180 automated tests** (160 server, 20 React), **94.87% server line coverage**, **99.04% route-file line coverage**, build/formatting pass and zero dependency advisories. Coverage includes models, middleware, routes, services, HTTP setup and realtime code; the process startup entry is excluded. This does not mean every branch or real Atlas behavior was tested. See [security review](SECURITY.md) and [performance report](PERFORMANCE.md).
