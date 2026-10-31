@@ -55,7 +55,7 @@ Source: the supplied six-page Hilltop Guest House project brief. Implement in or
 - [x] Repeatable isolated HTTP/socket load check with 10,000 saved messages; recorded results and limits in docs/PERFORMANCE.md.
 - [x] HTTP/socket security review, rate-limit/static-boundary checks; production audit has zero advisories. Patched glob/minimatch overrides resolve test-tooling findings; one unpatched low-severity Jest/deepmerge development advisory has an exact documented exception enforced by security:check.
 - [x] Local GitHub CI workflow for formatting, coverage, build, performance and audit; no application secrets needed.
-- [ ] Dedicated Hilltop GitHub repository and successful remote CI run; do not push to WanderWays.
+- [x] Dedicated private Hilltop repository pushed; remote CI passes on 31 October 2026: https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436. WanderWays repository remains separate.
 - [x] Permanent staff account provisioned privately; generated login reference stays only in ignored server/.env. No credentials are shipped.
 - [x] Production frontend serving/build and environment instructions, including missing-build fail-fast and same-origin REST/socket setup.
 - [ ] Free-host deployment after account access and provider limits are verified.

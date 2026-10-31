@@ -16,7 +16,7 @@ Task 5 checks include regression/coverage gates, repeatable isolated load checks
 
 Real Hilltop Atlas API/socket **and browser acceptance** passed on 31 October 2026 against the separate `hilltop_support` database. A permanent staff account is privately provisioned. Actual guest/staff React sessions verified claim/privacy, live replies, full history, search/date/pagination, draft/unread protection, mobile navigation, closure and session restoration; temporary fixtures were cleaned. Browser evidence is in [atlas-browser-results.json](docs/atlas-browser-results.json).
 
-Dedicated repository: [jahanzaibarshad/hilltop-guest-support-chat](https://github.com/jahanzaibarshad/hilltop-guest-support-chat) (private; reviewers need repository access). Remote CI verification, hotel-approved contacts/policies and hosting remain pending. No live deployment URL exists yet. Deployment is deferred at the user's request. See [TASKS.md](TASKS.md).
+Dedicated repository: [jahanzaibarshad/hilltop-guest-support-chat](https://github.com/jahanzaibarshad/hilltop-guest-support-chat) (private; reviewers need repository access). [Remote CI passed](https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436) on 31 October 2026: installation, formatting, all 181 tests/coverage, build, performance and security gate. The security gate includes the explicitly reviewed development exception, not a clean full-tree audit claim. Hotel-approved contacts/policies and hosting remain deferred. No live deployment URL exists yet. See [TASKS.md](TASKS.md).
 
 This is a **demo project**, as confirmed by the owner. Hotel contact numbers, support availability and retention/privacy policy remain explicitly **hotel approval pending**; no invented business details or automatic deletion policy is supplied.
 
@@ -261,7 +261,7 @@ The performance runner requires `npm run build` first. It uses 10,000 synthetic 
 
 After `npm ci` and `npm run build`, `npm start` serves the API and, when `NODE_ENV=production`, the compiled React app from the same port. Only `client/dist` is public; missing builds fail explicitly and unknown APIs stay JSON 404. Set private production configuration with an exact HTTPS `CLIENT_URL`, dedicated Mongo URI, random JWT secret and reviewed proxy hop count. Production Secure cookies require HTTPS; use development mode for ordinary local HTTP.
 
-The `.github/workflows/checks.yml` runs install, formatting, coverage, build, isolated load checks and audit after a push/PR/manual dispatch in the dedicated Hilltop repository. No Atlas secrets are required. The repository has been created; its remote Actions result must be verified after the initial push. No deployment was performed. Operational checks and remaining acceptance steps are in [HANDOVER.md](docs/HANDOVER.md).
+The `.github/workflows/checks.yml` runs install, formatting, coverage, build, isolated load checks and the scoped security gate after a push/PR/manual dispatch. No Atlas secrets are required. The [verified successful run](https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436) tested source commit `b42a7cc350882b882097d0062b3ffe80d4ac0581` on Ubuntu 22.04 / Node 22. See [ci-results.json](docs/ci-results.json) for recorded step results. No deployment was performed. Operational checks and remaining release steps are in [HANDOVER.md](docs/HANDOVER.md).
 
 ## Security and operations
 

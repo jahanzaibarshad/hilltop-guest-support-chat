@@ -1,0 +1,62 @@
+{
+  "verifiedAt": "2026-10-31T13:37:19.307Z",
+  "sourceCommit": "b42a7cc350882b882097d0062b3ffe80d4ac0581",
+  "runUrl": "https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436",
+  "conclusion": "success",
+  "platform": "Ubuntu 22.04 / Node 22",
+  "steps": [
+    {
+      "name": "Set up job",
+      "conclusion": "success"
+    },
+    {
+      "name": "Configure temporary database paths",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/checkout@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/setup-node@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run npm ci",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run npm run format:check",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run npm run test:coverage",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run npm run build",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run npm run test:performance",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run npm run security:check",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/setup-node@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/checkout@v4",
+      "conclusion": "success"
+    },
+    {
+      "name": "Complete job",
+      "conclusion": "success"
+    }
+  ],
+  "securityScope": "Zero production advisories; exact unpatched low-severity development-only deepmerge exception documented in SECURITY.md."
+}
