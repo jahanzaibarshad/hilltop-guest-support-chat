@@ -2,6 +2,8 @@
 
 Source: the supplied six-page Hilltop Guest House project brief. Implement in order; verify each task before describing it as complete.
 
+Submission scope confirmed by the owner on 9 November 2026: GitHub-only demo review. Deployment/live URL are excluded from this submission, while remaining undelivered original-brief items. No mentor waiver has been confirmed. Hotel details/policies remain approval pending for the demo. Implementation and recorded verification are complete for the GitHub review scope; the private repository still requires reviewer access.
+
 ## Task 1 — Data model and REST endpoints
 
 - [x] Independent MERN workspace, environment example and ports.
@@ -58,9 +60,9 @@ Source: the supplied six-page Hilltop Guest House project brief. Implement in or
 - [x] Dedicated private Hilltop repository pushed; remote CI passes on 31 October 2026: https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436. WanderWays repository remains separate.
 - [x] Permanent staff account provisioned privately; generated login reference stays only in ignored server/.env. No credentials are shipped.
 - [x] Production frontend serving/build and environment instructions, including missing-build fail-fast and same-origin REST/socket setup.
-- [ ] Free-host deployment after account access and provider limits are verified.
-- [ ] Real hosted guest/agent chat check; verified live/demo links in README.
+- [ ] Free-host deployment — excluded from the owner's GitHub-only submission; not delivered.
+- [ ] Real hosted guest/agent check and live/demo links — excluded with deployment; not delivered.
 - [ ] Approved hotel contacts/policies, privacy/retention and emergency guidance — explicitly deferred by the owner for this demo; keep hotel approval pending.
 - [x] Local handover with run/test/production-preparation instructions, limitations and honest submission note in docs/HANDOVER.md.
 
-Deployment is intentionally deferred. Real Atlas API/socket and browser acceptance checks pass; hotel contact/policy approval remains pending.
+Real Atlas API/socket/browser acceptance passed and the owner confirmed guided manual testing. README and handover are prepared for GitHub-only review. Deployment/live URL remain excluded, and hotel contact/policy approval remains pending. Original full-brief completion is not claimed.

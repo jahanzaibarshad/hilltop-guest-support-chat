@@ -1,24 +1,33 @@
 # Hilltop Guest Support
 
-A MERN guest-support application for Hilltop Guest House. This is a separate project from WanderWays; it has its own dependencies, ports and database.
+A MERN application for Hilltop Guest House where guests contact support and staff manage private conversations in real time.
 
-## Delivery status
+## Submission and review
 
-Task 1 is implemented: MongoDB models, authenticated REST endpoints, access control, API documentation, isolated integration tests and a responsive guest-side React foundation.
+**Repository:** [jahanzaibarshad/hilltop-guest-support-chat](https://github.com/jahanzaibarshad/hilltop-guest-support-chat). The repository is private; the owner must grant the reviewer access before sharing it for assessment.
 
-Task 2 is implemented: authenticated Socket.io messaging on the Express HTTP server, private selected-chat rooms, persisted-before-broadcast delivery, retry deduplication, reconnect recovery, live chat status and socket security tests. Guest pages update without Refresh; REST remains available when the live connection is unavailable. Real-browser checks verified two-tab delivery and recovery of 25 missed messages using an isolated temporary database.
+This handover is a **GitHub-only demo submission**, as requested by the owner on 9 November 2026. The source, local setup, API/socket documentation, tests and reports are provided for review. **No live deployment or live/demo URL is supplied.** The original brief includes deployment; its omission is the owner's submission choice, not a confirmed waiver from the mentor.
 
-Task 3 is implemented: a dedicated responsive agent inbox with waiting/own-active/own-closed views, conflict-safe assignment, full saved-history access, live replies/queue invalidations, durable unread markers, close confirmation, separate in-memory drafts and mobile inbox/detail navigation. Component/API/socket tests and isolated real-browser guest/two-agent acceptance checks cover the workflow.
+| Capability                                                                   | Status                                                    |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Guest registration/login, JWT cookie sessions and role-based access          | Implemented                                               |
+| MongoDB User, Chat and Message models, indexes and transactional persistence | Implemented; real Atlas checks passed                     |
+| REST chat endpoints and private Socket.io messaging                          | Implemented; live delivery, retries and recovery verified |
+| Responsive agent inbox, assignment, unread state, drafts and closure         | Implemented; guest/two-agent browser checks passed        |
+| History keyword/date filters and pagination, maximum 20 results per page     | Implemented; API and browser checks passed                |
+| Automated tests, coverage gates, performance checks and GitHub CI            | Implemented; recorded successful CI linked below          |
+| Live deployment and live/demo URL                                            | Excluded from this GitHub-only submission; not delivered  |
+| Hotel contacts, support timing and retention/privacy policy                  | Hotel approval pending; demo scope agreed with owner      |
 
-Task 4 is implemented: participant-scoped keyword/date history filters, validated UTC calendar ranges, maximum 20 results per page, stable upper-bound pagination and a responsive read-only search view in the agent inbox. Live/recovered messages flag an explicit refresh without silently changing filtered pages or clearing unread state. API, component and isolated real-browser checks cover the behavior.
+**Recorded validation (31 October 2026):** 181 tests passed (160 server + 21 React); server line coverage 94.87%, route-file line coverage 99.04%. [GitHub CI passed](https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436), including install, formatting, coverage, production build, isolated performance checks and the scoped security gate. These are dated results, not a claim that tests or dependency audits were rerun on every documentation update.
 
-Task 5 checks include regression/coverage gates, repeatable isolated load checks, security review, production frontend serving, GitHub CI and handover documentation. The suite contains 181 tests (160 server + 21 React), including a keyboard-focus regression. Server line coverage baseline is 94.87%; route-file line coverage is 99.04%. Production dependencies have zero reported advisories; one unpatched low-severity advisory in Jest-only development tooling is explicitly documented and narrowly reviewed by `security:check`. See [performance results](docs/PERFORMANCE.md), [security review](docs/SECURITY.md) and [handover](docs/HANDOVER.md).
+Production dependencies had zero reported advisories at that verification. One unpatched low-severity Jest/deepmerge development-tool advisory has a narrow documented exception; a clean full-tree audit is not claimed. Review [SECURITY.md](docs/SECURITY.md) and rerun `npm run security:check` for current results.
 
-Real Hilltop Atlas API/socket **and browser acceptance** passed on 31 October 2026 against the separate `hilltop_support` database. A permanent staff account is privately provisioned. Actual guest/staff React sessions verified claim/privacy, live replies, full history, search/date/pagination, draft/unread protection, mobile navigation, closure and session restoration; temporary fixtures were cleaned. Browser evidence is in [atlas-browser-results.json](docs/atlas-browser-results.json).
+Real Atlas API/socket and browser acceptance passed on 31 October 2026 against `hilltop_support`, including private assignment, live replies, saved history, search/pagination, mobile navigation and session restoration. Temporary test fixtures were cleaned. The owner subsequently confirmed the guided local manual checks passed.
 
-Dedicated repository: [jahanzaibarshad/hilltop-guest-support-chat](https://github.com/jahanzaibarshad/hilltop-guest-support-chat) (private; reviewers need repository access). [Remote CI passed](https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436) on 31 October 2026: installation, formatting, all 181 tests/coverage, build, performance and security gate. The security gate includes the explicitly reviewed development exception, not a clean full-tree audit claim. Hotel-approved contacts/policies and hosting remain deferred. No live deployment URL exists yet. See [TASKS.md](TASKS.md).
+Reviewer references: [handover and review flow](docs/HANDOVER.md), [performance report](docs/PERFORMANCE.md), [browser evidence](docs/atlas-browser-results.json), [CI evidence](docs/ci-results.json), [delivery checklist](TASKS.md).
 
-This is a **demo project**, as confirmed by the owner. Hotel contact numbers, support availability and retention/privacy policy remain explicitly **hotel approval pending**; no invented business details or automatic deletion policy is supplied.
+All real database credentials, JWT secrets and staff passwords are excluded from Git. Reviewers configure their own replica-set database and provision their own agent using the steps below. No shared default login is required or published.
 
 ## Requirements
 
@@ -28,15 +37,23 @@ This is a **demo project**, as confirmed by the owner. Hotel contact numbers, su
 
 ## Local setup
 
-Run these commands **from the Hilltop project folder**:
+Clone the repository into a directory of your choice (GitHub access is required):
+
+```sh
+git clone https://github.com/jahanzaibarshad/hilltop-guest-support-chat.git
+cd hilltop-guest-support-chat
+npm ci
+```
+
+Create the private environment file once. In PowerShell:
 
 ```powershell
-cd E:\Intership-project-2
-npm ci
-Copy-Item server/.env.example server/.env
+if (-not (Test-Path server/.env)) { Copy-Item server/.env.example server/.env }
 ```
 
 Copy the example only on first setup. Never overwrite an existing `.env` file.
+
+On macOS/Linux, use `test -f server/.env || cp server/.env.example server/.env`. For the owner's existing checkout, the project is at `E:\Intership-project-2` and its private environment is already configured.
 
 Edit `server/.env` privately:
 
@@ -61,6 +78,8 @@ Allow the development machine's current public IP in Atlas Network Access. Use a
 npm run dev
 ```
 
+`npm run dev` watches backend files and restarts the API after edits. For uninterrupted manual testing, use two terminals from the project root: `npm run start --workspace server` in the first, then `npm run dev --workspace client` in the second. Wait until the API is listening and `/api/health` reports `connected` before submitting a form. Stop a previous dev session before starting these commands so ports stay available.
+
 - Guest website: http://127.0.0.1:5175
 - API readiness: http://127.0.0.1:5001/api/health
 - Use `127.0.0.1` consistently rather than mixing it with `localhost`.
@@ -74,13 +93,21 @@ Public registration always creates a `guest`. There are no built-in accounts, pu
 
 Provide `AGENT_NAME`, `AGENT_EMAIL` and a strong `AGENT_PASSWORD` privately in the provisioning process environment, then run:
 
+For a review database, these can be added temporarily to the ignored `server/.env` (replace the placeholder values privately):
+
+```dotenv
+AGENT_NAME=Review Agent
+AGENT_EMAIL=agent@example.com
+AGENT_PASSWORD=<your_private_10_to_72_byte_password>
+```
+
 ```sh
 npm run create-agent --workspace server
 ```
 
 Existing accounts are not overwritten or promoted. Remove `AGENT_PASSWORD` from the provisioning environment after success. Agents use the normal **Sign in** form; their database role automatically opens the agent inbox instead of the guest chat screen.
 
-The owner-requested permanent staff account was provisioned and its browser login verified on 31 October 2026. Its local login reference is kept privately under `STAFF_LOGIN_EMAIL` / `STAFF_LOGIN_PASSWORD` in the owner's ignored `server/.env`; these fields are not loaded into frontend code or needed by runtime authentication. No actual email/password is included in the handover source or remote repository.
+The owner's permanent staff account was provisioned and browser-tested separately. Its private credentials are not supplied through the repository. A reviewer using a separate database should provision their own agent, then use the same sign-in page as guests; the saved role opens the agent inbox.
 
 ## Agent inbox usage
 
@@ -291,6 +318,6 @@ server/src/config/      Isolated Hilltop database configuration
 server/scripts/         Private agent provisioning and isolated performance runner
 server/test/            Isolated API, inbox, socket, authorization and concurrency tests
 docs/                   Security/performance reports, measurement and handover
-.github/workflows/      CI checks ready for a dedicated Hilltop repository
+.github/workflows/      GitHub Actions quality checks
 TASKS.md                Delivery checklist for the five brief tasks
 ```
