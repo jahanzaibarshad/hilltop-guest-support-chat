@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from '@jest/globals';
+import { afterAll, afterEach, beforeAll, describe, expect, jest, test } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -195,6 +195,59 @@ describe('Socket authentication and private rooms', () => {
 });
 
 describe('Persisted delivery and cross-transport retries', () => {
+  test('acknowledges persistence before inbox publication completes or rejects', async () => {
+    const host = await listening();
+    extraRuntimes.add(host);
+    const chat = await chatFor();
+    const sender = await socketFor(guest, {}, host);
+    let rejectPublication;
+    const publication = new Promise((resolve, reject) => {
+      rejectPublication = reject;
+    });
+    const notify = jest.spyOn(host.app.locals.realtime, 'notifyInbox').mockReturnValue(publication);
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const payload = input(chat);
+    const replies = [];
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject(new Error('Success ack waited for publication')),
+          4000,
+        );
+        sender.emit('sendMessage', payload, (reply) => {
+          replies.push(reply);
+          clearTimeout(timeout);
+          resolve(reply);
+        });
+      });
+      expect(result).toMatchObject({ ok: true, created: true });
+      expect(await Message.exists({ _id: result.message._id })).not.toBeNull();
+      rejectPublication(new Error('Simulated inbox delivery failure'));
+      for (let attempt = 0; attempt < 100 && !log.mock.calls.length; attempt++)
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(notify).toHaveBeenCalledTimes(1);
+      expect(log).toHaveBeenCalledWith('Live delivery deferred to history recovery:', 'Error');
+      expect(replies).toEqual([result]);
+      const history = await request(host.app)
+        .get(`/api/chats/${chat._id}/messages`)
+        .set('Cookie', guest.cookie);
+      expect(history.status).toBe(200);
+      expect(history.body.messages.some((message) => message._id === result.message._id)).toBe(
+        true,
+      );
+      const retry = await acknowledge(sender, 'sendMessage', payload);
+      expect(retry).toMatchObject({
+        ok: true,
+        created: false,
+        message: { _id: result.message._id },
+      });
+      expect(await Message.countDocuments({ chat: chat._id })).toBe(1);
+    } finally {
+      rejectPublication(new Error('Test teardown'));
+      notify.mockRestore();
+      log.mockRestore();
+    }
+  });
   test('guest and assigned agent receive one saved message, outsiders receive none', async () => {
     const chat = await chatFor(guest, true);
     const sender = await socketFor(guest),

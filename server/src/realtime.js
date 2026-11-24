@@ -203,11 +203,51 @@ export function attachRealtime(
       },
       true,
     );
-    handle('sendMessage', async (input, user) => {
-      const { chatId, ...message } = parse(socketMessageInput, input);
-      const result = await sendMessage(chatId, user, message);
-      if (result.created) await realtime.publishMessage(result.message);
-      return { message: result.message, created: result.created };
+    socket.on('sendMessage', async (input, acknowledge) => {
+      if (typeof acknowledge !== 'function') return;
+      const key = socket.data.userId;
+      let bucket = buckets.get(key);
+      if (!bucket || Date.now() >= bucket.reset) {
+        bucket = { count: 0, reset: Date.now() + windowMs };
+        buckets.set(key, bucket);
+      }
+      if (++bucket.count > eventLimit) {
+        acknowledge({
+          ok: false,
+          status: 429,
+          message: 'Too many live chat actions. Please wait before retrying.',
+        });
+        return;
+      }
+      let result;
+      try {
+        if (!socket.connected) return;
+        const { user } = await auth.resolveToken(socket.data.token);
+        const { chatId, ...message } = parse(socketMessageInput, input);
+        const saved = await sendMessage(chatId, user, message);
+        result = { ok: true, message: saved.message, created: saved.created };
+      } catch (error) {
+        acknowledge({
+          ok: false,
+          status: error instanceof HttpError ? error.status : 500,
+          message:
+            error instanceof HttpError
+              ? error.message
+              : 'Live chat action failed. Check history before retrying.',
+        });
+        if (error.status === 401) socket.disconnect(true);
+        return;
+      }
+
+      // The acknowledgement describes persistence, independently of live delivery.
+      acknowledge(result);
+      if (result.created) {
+        try {
+          await realtime.publishMessage(result.message);
+        } catch (error) {
+          console.error('Live delivery deferred to history recovery:', error.name);
+        }
+      }
     });
   });
   return realtime;
