@@ -1,43 +1,37 @@
-# Hilltop Guest Support
+# Hilltop Guest House - Task 2: Real-Time Messaging
 
-A MERN application for Hilltop Guest House where guests contact support and staff manage private conversations in real time.
+This repository contains the Hilltop Guest House chat implementation. This review is for **Task 2 of 5: Socket.io real-time messaging**, built on the existing Express API and MongoDB models. The repository also contains agent-inbox and history features; those are outside this Task 2 review.
 
-## Submission and review
+**Public repository:** https://github.com/jahanzaibarshad/hilltop-guest-support-chat
 
-**Repository:** [jahanzaibarshad/hilltop-guest-support-chat](https://github.com/jahanzaibarshad/hilltop-guest-support-chat). The repository is private; the owner must grant the reviewer access before sharing it for assessment.
+## Task 2 requirements and implementation
 
-This handover is a **GitHub-only demo submission**, as requested by the owner on 9 November 2026. The source, local setup, API/socket documentation, tests and reports are provided for review. **No live deployment or live/demo URL is supplied.** The original brief includes deployment; its omission is the owner's submission choice, not a confirmed waiver from the mentor.
+| Requirement                        | Implementation                                                                                                                                                        |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Socket.io on the Express server    | `server/src/http.js` creates one Node HTTP server for Express and attaches Socket.io to it.                                                                           |
+| Emit and broadcast messages        | Authenticated clients emit `sendMessage`; the server acknowledges the sender and emits `newMessage` to authorized participants in the selected private room.          |
+| Persist messages to MongoDB        | `server/src/services/messages.js` commits the message and chat activity pointers in one MongoDB transaction before broadcasting.                                      |
+| Only participants receive messages | Room joins, sends and broadcast recipients are checked against the guest owner or assigned agent. Unassigned agents and unrelated guests cannot receive chat content. |
+| README with run steps              | Setup, account provisioning, socket events, REST endpoints and manual verification are documented below.                                                              |
 
-| Capability                                                                   | Status                                                    |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Guest registration/login, JWT cookie sessions and role-based access          | Implemented                                               |
-| MongoDB User, Chat and Message models, indexes and transactional persistence | Implemented; real Atlas checks passed                     |
-| REST chat endpoints and private Socket.io messaging                          | Implemented; live delivery, retries and recovery verified |
-| Responsive agent inbox, assignment, unread state, drafts and closure         | Implemented; guest/two-agent browser checks passed        |
-| History keyword/date filters and pagination, maximum 20 results per page     | Implemented; API and browser checks passed                |
-| Automated tests, coverage gates, performance checks and GitHub CI            | Implemented; recorded successful CI linked below          |
-| Live deployment and live/demo URL                                            | Excluded from this GitHub-only submission; not delivered  |
-| Hotel contacts, support timing and retention/privacy policy                  | Hotel approval pending; demo scope agreed with owner      |
+## Files to review
 
-**Recorded validation (31 October 2026):** 181 tests passed (160 server + 21 React); server line coverage 94.87%, route-file line coverage 99.04%. [GitHub CI passed](https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436), including install, formatting, coverage, production build, isolated performance checks and the scoped security gate. These are dated results, not a claim that tests or dependency audits were rerun on every documentation update.
-
-Production dependencies had zero reported advisories at that verification. One unpatched low-severity Jest/deepmerge development-tool advisory has a narrow documented exception; a clean full-tree audit is not claimed. Review [SECURITY.md](docs/SECURITY.md) and rerun `npm run security:check` for current results.
-
-Real Atlas API/socket and browser acceptance passed on 31 October 2026 against `hilltop_support`, including private assignment, live replies, saved history, search/pagination, mobile navigation and session restoration. Temporary test fixtures were cleaned. The owner subsequently confirmed the guided local manual checks passed.
-
-Reviewer references: [handover and review flow](docs/HANDOVER.md), [performance report](docs/PERFORMANCE.md), [browser evidence](docs/atlas-browser-results.json), [CI evidence](docs/ci-results.json), [delivery checklist](TASKS.md).
-
-All real database credentials, JWT secrets and staff passwords are excluded from Git. Reviewers configure their own replica-set database and provision their own agent using the steps below. No shared default login is required or published.
+1. [Message model](server/src/models/Message.js): chat/sender references, body, role, timestamp and a unique retry identifier.
+2. [REST routes](server/src/routes/api.js): authenticated chat/message endpoints and recovery of saved messages.
+3. [Shared HTTP server](server/src/http.js): Express and Socket.io on the same server and port.
+4. [Socket layer](server/src/realtime.js): authentication, private rooms, send/broadcast events and recipient checks.
+5. [Message service](server/src/services/messages.js): participant authorization, transactional persistence and duplicate prevention.
+6. [Session authentication](server/src/middleware/auth.js): JWT cookie validation, current account/role checks and logout revocation.
+7. [React socket client](client/src/realtime.js): events, connection state, acknowledgement handling and reconnect recovery.
+8. [Socket integration tests](server/test/realtime.test.js): live delivery, persistence, privacy, retries and recovery.
 
 ## Requirements
 
 - Node.js 20.19+ or 22.12+ and npm.
-- MongoDB Atlas or a local MongoDB **replica set**. Message persistence uses a transaction to update the message and chat together. Standalone MongoDB is not sufficient.
-- A separate `hilltop_support` database; runtime fixes the database name to prevent accidentally writing into the WanderWays database.
+- MongoDB Atlas or a local MongoDB **replica set**, because message persistence uses transactions. Standalone MongoDB is insufficient.
+- A database user with read/write access to `hilltop_support`. Runtime explicitly selects this database.
 
 ## Local setup
-
-Clone the repository into a directory of your choice (GitHub access is required):
 
 ```sh
 git clone https://github.com/jahanzaibarshad/hilltop-guest-support-chat.git
@@ -51,273 +45,159 @@ Create the private environment file once. In PowerShell:
 if (-not (Test-Path server/.env)) { Copy-Item server/.env.example server/.env }
 ```
 
-Copy the example only on first setup. Never overwrite an existing `.env` file.
+On macOS/Linux:
 
-On macOS/Linux, use `test -f server/.env || cp server/.env.example server/.env`. For the owner's existing checkout, the project is at `E:\Intership-project-2` and its private environment is already configured.
+```sh
+test -f server/.env || cp server/.env.example server/.env
+```
 
-Edit `server/.env` privately:
+Configure `server/.env` privately:
 
 ```dotenv
 NODE_ENV=development
 PORT=5001
 CLIENT_URL=http://127.0.0.1:5175
-MONGODB_URI=mongodb+srv://<hilltop_user>:<url_encoded_password>@<cluster>/hilltop_support?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<url_encoded_password>@<cluster>/hilltop_support?retryWrites=true&w=majority
 JWT_SECRET=<at_least_32_random_characters>
 TRUST_PROXY=0
 ```
 
-Generate a secret locally and keep the output private:
+Generate a random JWT secret locally:
 
 ```sh
 node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
 ```
 
-Allow the development machine's current public IP in Atlas Network Access. Use a dedicated database user with access to `hilltop_support`, and URL-encode special characters in its password. Do not commit credentials. The app does not connect to Atlas until configuration is supplied, create demo users or silently fall back to a temporary database.
+Allow your machine's current IP in Atlas Network Access. Keep the real connection string and passwords out of Git. There are no built-in credentials or automatic demo-database fallbacks.
+
+For uninterrupted manual testing, start two terminals from the project root:
 
 ```sh
-npm run dev
+# Terminal 1: Express + Socket.io
+npm run start --workspace server
 ```
 
-`npm run dev` watches backend files and restarts the API after edits. For uninterrupted manual testing, use two terminals from the project root: `npm run start --workspace server` in the first, then `npm run dev --workspace client` in the second. Wait until the API is listening and `/api/health` reports `connected` before submitting a form. Stop a previous dev session before starting these commands so ports stay available.
+```sh
+# Terminal 2: React
+npm run dev --workspace client
+```
 
-- Guest website: http://127.0.0.1:5175
-- API readiness: http://127.0.0.1:5001/api/health
-- Use `127.0.0.1` consistently rather than mixing it with `localhost`.
-- Vite proxies `/api` and `/socket.io` (WebSocket and polling) to port 5001. The old project's ports are not used.
+- Website: http://127.0.0.1:5175/
+- API readiness: http://127.0.0.1:5001/api/health - should report `database: connected`.
+- Socket.io: `/socket.io` on the Express server, port 5001. Vite proxies it from the website, including WebSocket upgrades.
+- Use `127.0.0.1` consistently; do not mix it with `localhost`.
 
-For guest testing: create an account, start a conversation and open that conversation in a second tab. Both tabs should say **Live chat connected**; sending from one should update the other without Refresh. Disconnect/reconnect one tab to check saved-message recovery, and sign out to verify both tabs lose private access. Another guest must not see the first guest's chat. To test an agent alongside a guest, use a separate browser profile/incognito window: a single browser profile shares its login cookie across tabs.
+Alternatively, `npm run dev` starts both services with automatic backend restarts on file edits. Wait for database readiness before sending requests.
 
-## Agent provisioning
+## Guest and agent accounts
 
-Public registration always creates a `guest`. There are no built-in accounts, public passwords or public role-upgrade endpoints.
+Register guests through the website. Public registration always creates a guest.
 
-Provide `AGENT_NAME`, `AGENT_EMAIL` and a strong `AGENT_PASSWORD` privately in the provisioning process environment, then run:
-
-For a review database, these can be added temporarily to the ignored `server/.env` (replace the placeholder values privately):
+For agent testing, temporarily add these values to the ignored `server/.env`, replacing the placeholders privately:
 
 ```dotenv
 AGENT_NAME=Review Agent
 AGENT_EMAIL=agent@example.com
-AGENT_PASSWORD=<your_private_10_to_72_byte_password>
+AGENT_PASSWORD=<your_private_password>
 ```
+
+Use at least 10 characters and at most 72 UTF-8 bytes for the password. Run:
 
 ```sh
 npm run create-agent --workspace server
 ```
 
-Existing accounts are not overwritten or promoted. Remove `AGENT_PASSWORD` from the provisioning environment after success. Agents use the normal **Sign in** form; their database role automatically opens the agent inbox instead of the guest chat screen.
+Remove `AGENT_PASSWORD` after provisioning. Existing accounts are not overwritten or promoted. Sign in through the same website; the saved agent role opens the inbox. Use separate browser profiles/incognito sessions for guest and agent, since cookies are shared between tabs in one profile. A reviewer should provision their own agent against their configured database; no owner's password is required.
 
-The owner's permanent staff account was provisioned and browser-tested separately. Its private credentials are not supplied through the repository. A reviewer using a separate database should provision their own agent, then use the same sign-in page as guests; the saved role opens the agent inbox.
+## Socket events
 
-## Agent inbox usage
+Connections use the `hilltop_session` HttpOnly JWT cookie with credentials included. The handshake Origin must match `CLIENT_URL`. Each client event below requires an acknowledgement callback.
 
-1. Sign in with a privately provisioned agent account. **Waiting queue** shows unassigned, open conversations; **My active** and **My closed** show only your assignments. Summary counts follow those scopes, and each list is paginated with at most 20 chats per page.
-2. Select a waiting chat to see its subject, topic and guest name, not its messages. Click **Assign to me** to atomically claim it. A competing assignment/closure returns a readable conflict and refreshes the list; no other agent's message history becomes visible.
-3. Assigned chats open their latest saved messages. Use **Load earlier messages** until the full history is available. Older-history cursors do not shift when new messages arrive. Replies update the guest and selected agent conversation in real time; the REST fallback remains available.
-4. Guest messages make an assigned conversation unread until the agent views its latest loaded messages with the visible conversation following the bottom of the log. Read markers are persisted per assignment, not per browser tab. Reading an old cursor cannot clear a newer guest message. Unread state is a conversation indicator, not a per-message delivery/read receipt or a count of unread individual messages.
-5. Unsent drafts stay separate when switching chats or mobile panes and survive reconnects within the mounted inbox. They are not saved to disk or preserved after reload/sign-out. While reading older messages, use **Jump to latest messages** to resume following the live conversation.
-6. **Close conversation** requires confirmation, keeps saved history and disables further replies on both agent and guest. A draft that was not sent is identified as unsent, not silently delivered. Closed chats cannot be reopened through the current API.
-7. On small screens, use **Back to inbox** to return to the list. Loading, empty and retry states are available; Refresh inbox/chat can recover transient errors. Generic socket invalidations refresh the scoped queue after creation, assignment, closure, new messages and read changes. They contain no message text, guest details or chat IDs.
+| Direction             | Event          | Payload / result                                                                                                         |
+| --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Client to server      | `joinChat`     | `{ chatId }`; verifies participant access and joins one selected private room. Acknowledges `{ ok: true, chat }`.        |
+| Client to server      | `leaveChat`    | `{ chatId }`; leaves the room and acknowledges `{ ok: true }`.                                                           |
+| Client to server      | `sendMessage`  | `{ chatId, body, clientMessageId }`; commits to MongoDB, then broadcasts. Acknowledges `{ ok: true, message, created }`. |
+| Server to participant | `newMessage`   | The newly committed message, including its saved ID and creation timestamp.                                              |
+| Server to participant | `chatUpdated`  | Assignment or closure changes for an authorized selected conversation.                                                   |
+| Server to client      | `sessionError` | Session expiry/revocation or a live connection error; invalid sessions are disconnected.                                 |
 
-Earlier isolated browser acceptance used separate guest/two-agent sessions, 45 saved messages, live replies, draft switching, persisted unread state after reload, mobile navigation and closure propagation. Real Atlas browser acceptance subsequently passed on 31 October 2026: permanent staff, temporary guest/second-agent sessions, all 47 saved messages loaded, live guest/staff exchange, filtered pagination and mobile controls at 320/390/768/1440 widths. Test fixtures were removed; the permanent staff account was preserved. Deployment remains pending.
+Example with an authenticated `socket.io-client` connection from the configured browser origin:
 
-### Search and browse saved history
+```js
+import { io } from 'socket.io-client';
 
-Open an assigned active or closed conversation and click **Search history**. Enter a keyword and/or **From date** / **Through date**, then **Apply filters**. The results are newest-first with **Previous messages** / **Next messages**, at most 20 per page. Applying or clearing filters starts at page 1. Applied filters are shown separately from any unsaved edits in the form. Empty-result guidance and retry actions are available.
+const socket = io({ withCredentials: true });
+socket.on('newMessage', (message) => console.log(message.body));
 
-Dates are UTC calendar days, not the browser's local day: Through date includes the entire specified UTC day. The view is read-only and does not mark unseen live messages read. Replies and the in-memory draft remain in the live conversation. **Return to live chat** restores that draft and the current live log.
+socket.emit('joinChat', { chatId }, (joined) => {
+  if (!joined.ok) return;
+  socket.emit(
+    'sendMessage',
+    { chatId, body: 'Hello support', clientMessageId: crypto.randomUUID() },
+    (result) => console.log(result.ok ? result.message._id : result.message),
+  );
+});
+```
 
-New live messages or messages recovered after reconnect show a **Conversation updated** notice. Existing search rows, totals and page boundaries stay on their current upper bound until **Refresh results** is clicked. That refresh retains applied filters, returns to page 1 and includes any new matches. Non-matching incoming messages also trigger the notice; refreshing can legitimately leave the matching total unchanged. These controls do not change the inbox's separate waiting/active/closed filters.
+Messages must have a non-empty body of at most 2,000 characters. Socket sends require a UUID `clientMessageId`. Reuse that UUID with the same text when retrying uncertain delivery: the unique `(chat, sender, clientMessageId)` index prevents duplicate saves/broadcasts. Reusing it with different text returns 409. An acknowledgement timeout is uncertain delivery; inspect history or retry with the same ID.
+
+## Persistence and participant-only delivery
+
+1. Authenticate the socket with its signed session cookie; do not accept a supplied sender identity or role.
+2. Authorize the guest owner or assigned agent before joining a room or sending.
+3. Save the message and chat pointers in a MongoDB transaction.
+4. After commit, broadcast `newMessage` only to the private room's currently authorized participants, including the sender if joined. Return the saved message in the sender's acknowledgement.
+5. Recheck each recipient's current session/account and assignment before delivery. Invalid or unauthorized sockets lose access. Arbitrary client `newMessage` events do not broadcast anything.
+
+An unassigned agent can see waiting-chat metadata but must claim the chat before accessing messages. Logout revokes sessions and disconnects sockets; JWT expiry also disconnects idle clients. Closed chats retain history but reject fresh messages. HTTP and socket sends share the same message service and retry index.
 
 ## API reference
 
-JSON request/response bodies. `/api` is the browser API prefix; the brief's unprefixed routes are also supported (for example, `/users` and `/chats/:id/messages`). Never put credentials in URLs.
+All paths below use the browser's `/api` prefix; equivalent unprefixed routes are also supported. JSON bodies and credentialed requests/cookie jars are required. Authentication uses an eight-hour JWT cookie, not a token in localStorage.
 
-Authentication is an eight-hour JWT in the `hilltop_session` HttpOnly, SameSite=Strict cookie. Use a cookie jar in Postman, or `credentials: 'include'` in browser requests. Production cookies require HTTPS. Roles and user existence are rechecked in MongoDB on every protected request.
+| Method | Endpoint                       | Purpose / access                                                                                                          |
+| ------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`                  | 200 when MongoDB is connected; 503 otherwise.                                                                             |
+| POST   | `/api/users`                   | Register a guest: `{ name, email, password }`; 201 and session cookie.                                                    |
+| POST   | `/api/auth/login`              | Sign in: `{ email, password }`; 200 and session cookie.                                                                   |
+| POST   | `/api/auth/logout`             | Revoke sessions, clear cookie and disconnect sockets; 204.                                                                |
+| GET    | `/api/auth/me`                 | Restore authenticated public profile.                                                                                     |
+| POST   | `/api/chats`                   | Guest creates a chat: `{ subject, category }`; 201.                                                                       |
+| GET    | `/api/chats`                   | Permission-scoped chat list; `page`, `limit`.                                                                             |
+| GET    | `/api/chats/:id`               | Guest owner or assigned agent retrieves a chat.                                                                           |
+| PATCH  | `/api/chats/:id/assign`        | Agent atomically claims an available chat.                                                                                |
+| PATCH  | `/api/chats/:id/close`         | Participant closes a chat.                                                                                                |
+| POST   | `/api/chats/:id/messages`      | Participant sends `{ body, clientMessageId }`; 201 new, 200 retry. New messages also broadcast to connected participants. |
+| GET    | `/api/chats/:id/messages`      | Participant retrieves saved history; newest first, maximum 20/page.                                                       |
+| GET    | `/api/chats/:id/messages/sync` | Participant recovers missed messages with optional `after=<messageId>` and `limit=20`; oldest first after the cursor.     |
 
-Logout increments the user's persisted session version, revokes all of that user's existing sessions (including other devices), and disconnects their live sockets. Existing Task 1 cookies must sign in again after this update. Session versions/password hashes are never returned to clients.
+`subject` is 3-120 characters; `category` is `booking`, `amenities`, `general` or `urgent`. REST `clientMessageId` is optional, but should be retained for safe retries. History responses contain `{ messages, pagination }`. Recovery returns `{ messages, hasMore, nextCursor }`; the cursor must belong to the authorized chat. Follow `nextCursor` while `hasMore` is true, merging saved IDs with live events to avoid duplicates.
 
-| Method | Path                      | Access / result                                                          |
-| ------ | ------------------------- | ------------------------------------------------------------------------ |
-| GET    | `/api/health`             | 200 connected; 503 disconnected                                          |
-| POST   | `/api/users`              | Create guest; 201 and session cookie                                     |
-| POST   | `/api/auth/login`         | Sign in; 200 and session cookie                                          |
-| POST   | `/api/auth/logout`        | Clear session; 204                                                       |
-| GET    | `/api/auth/me`            | Signed-in user's public profile                                          |
-| POST   | `/api/chats`              | Guest starts their own chat; 201                                         |
-| GET    | `/api/chats`              | Guest's own chats; agents see unassigned chats and their own assignments |
-| GET    | `/api/chats/:id`          | Guest owner or assigned agent only                                       |
-| PATCH  | `/api/chats/:id/assign`   | Agent claims an unassigned, non-closed chat atomically                   |
-| PATCH  | `/api/chats/:id/close`    | Guest owner or assigned agent closes the chat                            |
-| POST   | `/api/chats/:id/messages` | Participant sends message; 201 new, 200 idempotent retry                 |
-| GET    | `/api/chats/:id/messages` | Participant retrieves paginated history                                  |
+Errors use `{ message }`: 400 invalid data, 401 invalid session, 403 forbidden role/origin, 404 missing/inaccessible chat, 409 conflict/closed chat, 413 oversized body, 429 rate limit, 503 bounded search timeout and sanitized 500 errors. Socket failures acknowledge `{ ok: false, status, message }`.
 
-Registration:
+## Manual Task 2 verification
 
-```json
-{ "name": "Guest Name", "email": "guest@example.com", "password": "your-private-password" }
-```
+1. Start both services and confirm database readiness. Register a guest and start a conversation.
+2. Open a separate browser profile, sign in as the provisioned agent and select the conversation from Waiting queue. Before assignment, message history must stay private. Click **Assign to me**.
+3. Send messages in both directions. Each should appear without Refresh, and both sessions should show a live connection.
+4. Reload the pages. Saved messages should return from MongoDB. Open the guest conversation in another tab to check participant room broadcasts.
+5. Disconnect one client, send from the other, then reconnect. Missed persisted messages should recover without duplicate entries.
+6. Sign in as a different guest or unassigned second agent. Knowing the chat ID must not grant room, history or send access.
+7. Sign out or close the conversation. Revoked sessions lose socket access; closed conversations reject fresh sends.
 
-Name: 2–80 characters. Email is unique and case-insensitive. Password: at least 10 characters and at most 72 UTF-8 bytes. Unknown fields (including `role`) are rejected. Responses never include password hashes.
-
-Login:
-
-```json
-{ "email": "guest@example.com", "password": "your-private-password" }
-```
-
-Start chat:
-
-```json
-{ "subject": "Can I check in early?", "category": "booking" }
-```
-
-Subject: 3–120 characters. Categories: `booking`, `amenities`, `general`, `urgent`. An urgent category does not promise immediate handling or emergency dispatch. Ownership is always inferred from the authenticated user.
-
-Send message:
-
-```json
-{ "body": "Our train arrives at 10 am.", "clientMessageId": "b3f76943-b4ad-4c85-a40f-1cba8657b96c" }
-```
-
-Body: 1–2000 characters after trimming. Sender identity/role comes from the session, never the request. `clientMessageId` is an optional UUID: clients should retain it when retrying the same message after uncertain delivery. Reusing the same ID with different text returns 409. Concurrent retries save one message. Closed chats retain readable history but reject new messages.
-
-### Lists and history
-
-```text
-GET /api/chats?page=1&limit=20
-GET /api/chats/:id/messages?page=1&limit=20
-GET /api/chats/:id/messages?search=breakfast&start=2026-10-01&end=2026-10-27&page=1&limit=20
-```
-
-Page is a positive integer, capped at 10,000. Limit defaults to 20 and must be 1–20. Unknown, repeated, object-shaped or malformed query parameters are rejected. Chat-list endpoints accept their documented pagination/status fields; keyword/date filters apply to message history only.
-
-| History parameter | Rules                                                                                                                                                                                                                  |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `search`          | Optional, trimmed, case-insensitive **literal substring**, max 80 characters; empty means no keyword filter. Regex metacharacters are escaped; control characters are rejected.                                        |
-| `start`           | Optional real calendar date, exactly `YYYY-MM-DD`; inclusive UTC midnight.                                                                                                                                             |
-| `end`             | Optional real calendar date, exactly `YYYY-MM-DD`; includes the entire UTC day (exclusive next midnight). Must not precede `start`.                                                                                    |
-| `page`            | Integer 1–10,000, default 1. A valid page beyond available results returns an empty page with correct totals.                                                                                                          |
-| `limit`           | Integer 1–20, default 20.                                                                                                                                                                                              |
-| `snapshot`        | Optional upper-bound message ObjectId returned in `pagination.snapshot`, or the literal `empty`; reuse for subsequent pages of the same search. It must belong to this authorized chat. Omit it to take a fresh bound. |
-
-All supplied filters intersect and cannot bypass guest ownership/agent assignment. The `{ chat: 1, createdAt: -1, _id: -1 }` index scopes ordering/date work to the conversation. Literal, case-insensitive substring matching can still scan that conversation's candidate messages: no claim of an indexed full-text engine is made. History queries/counts use a 3-second server processing budget and return a readable 503 on timeout; this is not a network timeout. Local load scope/results are in [PERFORMANCE.md](docs/PERFORMANCE.md).
-
-```json
-{
-  "messages": [],
-  "pagination": { "page": 1, "limit": 20, "total": 0, "pages": 1, "snapshot": "empty" }
-}
-```
-
-Chat lists use `chats` instead of `messages` and have no history snapshot field. Messages are newest-first, ordered by creation time then ID; conversational logs reverse the latest page for reading. Chat lists remain live and are ordered by last update then ID.
-
-For message history, the server chooses the latest existing message in the authorized chat as an upper bound, then intersects its `(createdAt, _id)` boundary with the filters. Reusing its ID keeps subsequent numbered pages stable during normal append-only app writes. An initially empty result set from an empty chat returns `snapshot=empty`, which stays empty until refresh. A foreign/missing snapshot returns 400 after participant authorization. This upper bound is **not** a MongoDB transaction snapshot: administrative deletion/backdated inserts can change old rows, and there are no public message edit/delete endpoints. Refreshing, applying new filters or clearing filters takes a new bound. Reconnect recovery remains separate from filtered page retrieval.
-
-### Errors and access
-
-Errors use `{ "message": "Readable explanation" }`: 400 validation/invalid ID, 401 missing/expired session, 403 forbidden role/origin, 404 missing or inaccessible chat, 409 duplicate email/assignment conflict/closed chat/message ID conflict, 413 oversized request, 415 compressed JSON, 429 rate limit, 503 bounded database-search timeout, 500 sanitized unexpected failure.
-
-An unassigned agent can see queue metadata, but cannot read or write a chat's messages until claiming it. Competing claims cannot overwrite the winning assignment. No destructive user/chat/message delete endpoints are exposed: retention and erasure rules need hotel approval before business launch.
-
-## Real-time messaging
-
-### Inbox and history endpoints
-
-| Method | Path                                                                       | Result                                                                                                         |
-| ------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/agent/chats?status=waiting&page=1&limit=20`                          | Agent-only scoped list, `{ chats, summary: { waiting, active, closed, unread }, pagination }`                  |
-| POST   | `/api/chats/:id/read`                                                      | Assigned agent only; body `{ "messageId": "<latest-visible-message-id>" }`, returns chat with `unread` boolean |
-| GET    | `/api/chats/:id/messages/older?before=<oldest-loaded-message-id>&limit=20` | Participant-only older history, newest-first; `{ messages, hasMore, nextCursor }`                              |
-
-Inbox `status` is `waiting`, `active` or `closed`; page is a positive integer, limit is 1–20. Waiting rows may expose guest name and chat metadata, never email/passwords or message bodies. Assigned lists are restricted to the current agent; other agents cannot list/read their conversations. Read/history cursors must be messages in that same authorized chat. Read updates do not change the chat's activity timestamp, and a conditional write prevents an old acknowledgement from marking a newer message read. New guest messages transactionally update `lastGuestMessage`; `agentReadMessage` stores the acknowledged guest-message high-water mark. Existing pre-upgrade history has no retrospective unread marker until a new guest message is sent.
-
-### Real-time protocol
-
-Socket.io uses `/socket.io` on the same HTTP server as Express (port 5001 locally), with the existing HttpOnly session cookie. It does not accept identities or roles supplied in a socket payload. Browser handshake origins must exactly match `CLIENT_URL`; both WebSocket and polling are supported. No special socket secret or extra Atlas credentials are needed.
-
-Client events require an acknowledgement callback:
-
-| Event         | Payload                                                                         | Success acknowledgement                          |
-| ------------- | ------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `joinChat`    | `{ "chatId": "<chat ObjectId>" }`                                               | `{ "ok": true, "chat": {} }`                     |
-| `leaveChat`   | `{ "chatId": "<chat ObjectId>" }`                                               | `{ "ok": true }`                                 |
-| `sendMessage` | `{ "chatId": "<chat ObjectId>", "body": "Hello", "clientMessageId": "<UUID>" }` | `{ "ok": true, "message": {}, "created": true }` |
-
-Errors acknowledge `{ "ok": false, "status": 400, "message": "..." }`; authorization errors are 401/404, closed chat conflicts 409 and throttling 429. Socket message IDs are required UUIDs. The server broadcasts `newMessage` only for a new committed message, and `chatUpdated` for assignment/closure. `sessionError` signals revoked/expired sessions or connection-limit problems. Raw arbitrary client `newMessage` events have no broadcast handler.
-
-A socket listens to one selected chat at a time. Room joins are serialized, verify current database ownership/assignment and leave the previous chat. Every action rechecks the authenticated account; every broadcast rechecks each recipient. JWT expiry disconnects idle sockets too. An unassigned agent cannot join a room or receive its message history.
-
-Agents additionally join a server-managed inbox channel for `inboxChanged` invalidations with an empty payload. The server rechecks role/session before sending them; guests cannot subscribe. The client coalesces these refreshes and refetches the permission-scoped API. A role change removes access even on an existing connection. The channel is not an alternative way to subscribe to private message content.
-
-REST and sockets use the same transaction service and message ID index. A timed-out socket acknowledgement is **uncertain delivery**, not proof that sending failed: retry the same UUID/text, or inspect saved history. Successful retries return the original message without another broadcast. The React client deduplicates events/acknowledgements by message ID, orders them by timestamp/ID and does not buffer automatic sends while offline. REST is the fallback for a new/retried send when live status is not ready. Unsaved composer text is kept during reconnects, but not after a page reload or sign-out.
-
-### Missed-message recovery
-
-```text
-GET /api/chats/:id/messages/sync?after=<last-known-message-ObjectId>&limit=20
-```
-
-Participant-only recovery returns `{ "messages": [], "hasMore": false, "nextCursor": "<last-message-id-or-null>" }`, oldest-first after the cursor using `(createdAt, _id)` ordering. The cursor must belong to the same chat. Omit `after` to start at its oldest message. Limit is 1–20. Clients rejoin before recovery and follow `nextCursor` while `hasMore` is true, merging concurrently arriving events. Reconnect recovery is capped at 200 pages (4,000 messages) per attempt with an explicit warning and Refresh option rather than silently dropping a large backlog. Agent initial history and reconnect synchronization are coordinated so old history is loaded on demand, not accidentally fetched in full by an early socket join. Recovery never inserts messages directly into a filtered history page; it flags that view for an explicit refresh.
-
-Socket protections are process-local: 60 acknowledged actions/minute/user across their connections/reconnects, 10 concurrent sockets per observed IP address, a 10 KB packet limit and strict payload validation. The shared-user event budget is checked before adding room operations to a queue. The backend factory exposes `socketOptions` to tune these limits. Before deploying behind a proxy or scaling out, tune the observed-IP cap for hotel/NAT/proxy traffic and add a shared adapter and distributed limiter. No multi-instance delivery guarantee is claimed.
-
-## Testing and checks
+## Automated Task 2 tests
 
 ```sh
-npm test
-npm run test:coverage
-npm run format:check
-npm run build
-npm run test:performance
-npm audit
-npm run security:check
+npm run test --workspace server -- --runTestsByPath test/realtime.test.js
 ```
 
-Tests start an isolated temporary MongoDB replica set; they do not load the app's `.env` or use its Atlas URI. The first run may download the MongoDB test binary. On a low-space Windows machine, set `MONGOMS_DOWNLOAD_DIR` and `TEST_DB_ROOT` to writable cache folders with sufficient space. Coverage includes server models, middleware, routes, services, HTTP setup and sockets; the process startup entry is excluded. Coverage gates require 80% statements/lines/functions and 75% branches. Current suite: 160 backend + 21 React tests.
+The socket integration suite covers shared HTTP/polling setup, authenticated private rooms, committed delivery, outsider exclusion, REST-to-socket broadcast, retry deduplication, room leave/switching, session revocation/expiry, rate limits and recovery of more than 20 missed messages. Tests start a disposable MongoDB replica set; they do not read `.env` or use the application's Atlas URI. The first run may download a MongoDB binary.
 
-`npm audit` still reports the unpatched Jest/deepmerge development advisory and its transitive impact. `npm run security:check` independently requires zero production advisories, rejects every unreviewed development advisory and permits only the named low-severity development exception in [SECURITY.md](docs/SECURITY.md). It does not suppress unrelated future findings. Patched `glob`/`minimatch` overrides keep the test tooling's other reported issues resolved.
+The documented Task 2 command was rerun during this README correction: **31 socket integration tests passed**.
 
-The performance runner requires `npm run build` first. It uses 10,000 synthetic messages, actual loopback HTTP/socket traffic and a disposable replica set with no external target option. `npm run test:performance -- --report` saves a sanitized local measurement. See [PERFORMANCE.md](docs/PERFORMANCE.md) for predefined budgets, results and limitations.
+For the wider regression suite, run `npm run test:coverage`. Recorded CI and real Atlas checks from 31 October 2026 are available in [ci-results.json](docs/ci-results.json) and [atlas-browser-results.json](docs/atlas-browser-results.json); those records are dated evidence, not a fresh execution claim.
 
-### Explicit real Atlas smoke check
+## Review notes
 
-`npm run test:atlas` loads private `server/.env` and connects to the configured **real** `hilltop_support` database. It checks indexes, signup/login, private assignment, transactional REST/socket delivery, cross-transport retry, history/date/pagination filters, recovery, read markers, closure and logout. It creates uniquely labelled temporary guest/agent accounts and one chat, then removes only its own fixtures. It never drops collections/databases or alters existing accounts. A forced process termination may leave labelled fixtures for inspection. This command is deliberately separate from CI and isolated tests; it needs real credentials/network access and performs real writes. Last successful run: 31 October 2026, including cleanup.
-
-## Production preparation and CI
-
-After `npm ci` and `npm run build`, `npm start` serves the API and, when `NODE_ENV=production`, the compiled React app from the same port. Only `client/dist` is public; missing builds fail explicitly and unknown APIs stay JSON 404. Set private production configuration with an exact HTTPS `CLIENT_URL`, dedicated Mongo URI, random JWT secret and reviewed proxy hop count. Production Secure cookies require HTTPS; use development mode for ordinary local HTTP.
-
-The `.github/workflows/checks.yml` runs install, formatting, coverage, build, isolated load checks and the scoped security gate after a push/PR/manual dispatch. No Atlas secrets are required. The [verified successful run](https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436) tested source commit `b42a7cc350882b882097d0062b3ffe80d4ac0581` on Ubuntu 22.04 / Node 22. See [ci-results.json](docs/ci-results.json) for recorded step results. No deployment was performed. Operational checks and remaining release steps are in [HANDOVER.md](docs/HANDOVER.md).
-
-## Security and operations
-
-- Bcrypt password hashes; authenticated, database-checked roles; private message history.
-- Explicit browser origin, security headers, no-store API responses, 10 KB uncompressed JSON limit, validation and strict request schemas.
-- HTTP limit: 300 requests/15 minutes/IP. Signup/login share an additional 15 attempts/15 minutes/IP limit.
-- HTTP/socket limits and room delivery are process-local; a multi-instance production deployment needs shared limiting and a Socket.io adapter.
-- No permanent credentials or agent accounts are shipped. Keep environment files and runtime data out of Git.
-- Startup fails for missing/invalid credentials; health never claims a disconnected database is ready.
-- Configure verified hotel contacts, privacy/retention policies and emergency guidance before business use. Do not collect card details or passwords in chat.
-- Production serving, local security/performance checks, private staff provisioning and real Atlas API/socket/browser acceptance are implemented. Hosting/live URL, business approval, monitoring and backup/restore readiness remain pending. See the [security review](docs/SECURITY.md) for concrete controls and launch limitations.
-
-## Structure
-
-```text
-client/                 React guest-side REST foundation, responsive CSS and Vite
-client/src/AgentInbox.jsx Dedicated agent workspace, drafts, read markers and history
-client/src/HistorySearch.jsx Read-only filtered history with stable numbered pages
-client/src/test/         Inbox component interaction tests
-server/src/models/      User, Chat, Message schemas and indexes
-server/src/routes/      REST endpoints
-server/src/services/    Transactional message persistence and scoped, bounded history search
-server/src/middleware/  Session authentication and public user serialization
-server/src/realtime.js  Authenticated rooms, socket actions, limits and safe broadcasts
-server/src/http.js      Shared Express + Socket.io HTTP server factory
-server/src/config/      Isolated Hilltop database configuration
-server/scripts/         Private agent provisioning and isolated performance runner
-server/test/            Isolated API, inbox, socket, authorization and concurrency tests
-docs/                   Security/performance reports, measurement and handover
-.github/workflows/      GitHub Actions quality checks
-TASKS.md                Delivery checklist for the five brief tasks
-```
+This README documents the Task 2 implementation and how to run it. The repository contains additional inbox/history functionality, which is not required to assess the real-time messaging work. Socket limits are process-local (60 acknowledged actions/minute/user, 10 concurrent connections per observed IP, 10 KB packets); scaling needs a shared adapter/limiter and reviewed proxy handling. Existing security details, including the recorded development-only dependency exception, are in [SECURITY.md](docs/SECURITY.md).

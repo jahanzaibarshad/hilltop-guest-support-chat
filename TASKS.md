@@ -1,8 +1,6 @@
-# Hilltop delivery checklist
+# Hilltop development roadmap
 
-Source: the supplied six-page Hilltop Guest House project brief. Implement in order; verify each task before describing it as complete.
-
-Submission scope confirmed by the owner on 9 November 2026: GitHub-only demo review. Deployment/live URL are excluded from this submission, while remaining undelivered original-brief items. No mentor waiver has been confirmed. Hotel details/policies remain approval pending for the demo. Implementation and recorded verification are complete for the GitHub review scope; the private repository still requires reviewer access.
+This file preserves the broader Hilltop project development history. The current supervisor submission is **Task 2: Socket.io real-time messaging**, documented in the root README. Other task checklists below are roadmap context, not the scope of this review. The repository is public.
 
 ## Task 1 — Data model and REST endpoints
 
@@ -57,12 +55,12 @@ Submission scope confirmed by the owner on 9 November 2026: GitHub-only demo rev
 - [x] Repeatable isolated HTTP/socket load check with 10,000 saved messages; recorded results and limits in docs/PERFORMANCE.md.
 - [x] HTTP/socket security review, rate-limit/static-boundary checks; production audit has zero advisories. Patched glob/minimatch overrides resolve test-tooling findings; one unpatched low-severity Jest/deepmerge development advisory has an exact documented exception enforced by security:check.
 - [x] Local GitHub CI workflow for formatting, coverage, build, performance and audit; no application secrets needed.
-- [x] Dedicated private Hilltop repository pushed; remote CI passes on 31 October 2026: https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436. WanderWays repository remains separate.
+- [x] Dedicated public Hilltop repository pushed; remote CI passes on 31 October 2026: https://github.com/jahanzaibarshad/hilltop-guest-support-chat/actions/runs/41206257436.
 - [x] Permanent staff account provisioned privately; generated login reference stays only in ignored server/.env. No credentials are shipped.
 - [x] Production frontend serving/build and environment instructions, including missing-build fail-fast and same-origin REST/socket setup.
-- [ ] Free-host deployment — excluded from the owner's GitHub-only submission; not delivered.
-- [ ] Real hosted guest/agent check and live/demo links — excluded with deployment; not delivered.
+- [ ] Free-host deployment - separate roadmap work; outside the current Task 2 review.
+- [ ] Real hosted guest/agent check and live/demo links - separate roadmap work; outside the current Task 2 review.
 - [ ] Approved hotel contacts/policies, privacy/retention and emergency guidance — explicitly deferred by the owner for this demo; keep hotel approval pending.
 - [x] Local handover with run/test/production-preparation instructions, limitations and honest submission note in docs/HANDOVER.md.
 
-Real Atlas API/socket/browser acceptance passed and the owner confirmed guided manual testing. README and handover are prepared for GitHub-only review. Deployment/live URL remain excluded, and hotel contact/policy approval remains pending. Original full-brief completion is not claimed.
+The current Task 2 review uses the root README and socket integration tests. Broader release planning does not change that review scope.
