@@ -1,35 +1,66 @@
-# Hilltop Guest House - Task 2: Real-Time Messaging
+# Hilltop Guest House - Task 3: Agent Inbox UI
 
-This repository contains the Hilltop Guest House chat implementation. This review is for **Task 2 of 5: Socket.io real-time messaging**, built on the existing Express API and MongoDB models. The repository also contains agent-inbox and history features; those are outside this Task 2 review.
+This is the Hilltop Guest House chat repository. The current submission is **Task 3 of 5: Agent Inbox UI**. It builds on the accepted Task 2 Socket.io messaging implementation; that implementation is documented separately in [Task 2 notes](docs/TASK2.md).
 
 **Public repository:** https://github.com/jahanzaibarshad/hilltop-guest-support-chat
 
-## Task 2 requirements and implementation
+## Task 3 acceptance checklist
 
-| Requirement                        | Implementation                                                                                                                                                        |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Socket.io on the Express server    | `server/src/http.js` creates one Node HTTP server for Express and attaches Socket.io to it.                                                                           |
-| Emit and broadcast messages        | Authenticated clients emit `sendMessage`; the server acknowledges the sender and emits `newMessage` to authorized participants in the selected private room.          |
-| Persist messages to MongoDB        | `server/src/services/messages.js` commits the message and chat activity pointers in one MongoDB transaction before broadcasting.                                      |
-| Only participants receive messages | Room joins, sends and broadcast recipients are checked against the guest owner or assigned agent. Unassigned agents and unrelated guests cannot receive chat content. |
-| README with run steps              | Setup, account provisioning, socket events, REST endpoints and manual verification are documented below.                                                              |
+| Requirement                        | Implementation                                                                                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent page lists chats with status | Waiting queue, My active and My closed show status-labelled chats; active/closed views are scoped to the signed-in agent.                         |
+| Agent can assign themselves        | Assign to me atomically claims an available chat; a competing claim shows a conflict and refreshes the queue.                                     |
+| Assigned agent sees full history   | Latest messages load first; Load earlier messages retrieves older cursor pages until all saved messages are available.                            |
+| UI updates when messages arrive    | newMessage merges selected-chat messages by ID; inboxChanged triggers a coalesced scoped queue refresh. Reconnect recovers saved missed messages. |
+| README includes usage              | Local setup, private agent provisioning and the reviewer walkthrough are below.                                                                   |
 
 ## Files to review
 
-1. [Message model](server/src/models/Message.js): chat/sender references, body, role, timestamp and a unique retry identifier.
-2. [REST routes](server/src/routes/api.js): authenticated chat/message endpoints and recovery of saved messages.
-3. [Shared HTTP server](server/src/http.js): Express and Socket.io on the same server and port.
-4. [Socket layer](server/src/realtime.js): authentication, private rooms, send/broadcast events and recipient checks.
-5. [Message service](server/src/services/messages.js): participant authorization, transactional persistence and duplicate prevention.
-6. [Session authentication](server/src/middleware/auth.js): JWT cookie validation, current account/role checks and logout revocation.
-7. [React socket client](client/src/realtime.js): events, connection state, acknowledgement handling and reconnect recovery.
-8. [Socket integration tests](server/test/realtime.test.js): live delivery, persistence, privacy, retries and recovery.
+- [Agent inbox](client/src/AgentInbox.jsx): status lists, assignment, message history and live updates.
+- [Inbox styles](client/src/agent-inbox.css): responsive conversation list/detail panes.
+- [React socket hook](client/src/realtime.js): one socket per mounted authenticated hook, callback refs and cleanup.
+- [Agent API](server/src/routes/agent.js): agent-scoped inbox and read markers.
+- [Chat/message API](server/src/routes/api.js): atomic assignment and saved/older/recovery history.
+- [Inbox API tests](server/test/inbox.test.js) and [React inbox tests](client/src/test/AgentInbox.test.jsx).
 
 ## Requirements
 
 - Node.js 20.19+ or 22.12+ and npm.
 - MongoDB Atlas or a local MongoDB **replica set**, because message persistence uses transactions. Standalone MongoDB is insufficient.
 - A database user with read/write access to `hilltop_support`. Runtime explicitly selects this database.
+
+## Agent inbox usage and Task 3 verification
+
+1. Configure the database and start both services using Local setup below. Privately provision an agent using Guest and agent accounts. Sign in through the same website; the agent role automatically opens Agent inbox.
+2. In a separate browser profile/incognito session, register a guest, create a conversation and send a message. Separate profiles prevent guest and agent cookies from overwriting each other.
+3. In the agent page, Waiting queue lists unassigned chats with their status, subject, category and guest name. Message history stays private until assignment. Select the conversation and click **Assign to me**.
+4. The conversation becomes active and appears in **My active**. The assigned agent can read the latest saved messages and click **Load earlier messages** repeatedly to access the complete history. Other agents cannot read that assignment.
+5. Exchange guest/agent messages without refreshing. Selected messages update live; queue/list invalidations refetch scoped data. Reload to confirm persistence and reconnect to confirm missed-message recovery.
+6. Switch conversations to verify separate in-memory drafts and unread indicators. On mobile, use **Back to inbox** to navigate between the list and selected conversation.
+7. Close the conversation with confirmation. It appears in **My closed**, retains readable saved history and rejects new replies. Closed chats cannot be reopened through the current UI.
+
+### Socket listener lifecycle
+
+AgentInbox calls useRealtime once. Its connection effect depends on userId, while callbacks are updated through a ref. Switching selected chats reuses that connection. Cleanup removes listeners, clears the reconnect timer and disconnects the socket on unmount/user change. Message IDs deduplicate acknowledgements, live events and recovery results.
+
+### Scope and limitations
+
+This review covers the five Task 3 criteria above. History search is present as additional functionality. Typing indicators are not implemented and are not required for this submission. Drafts are held in memory and are not retained after reload/sign-out. No live deployment or shared account password is required to follow the local reviewer setup.
+
+### Task 3 tests
+
+```sh
+npm run test --workspace client -- src/test/AgentInbox.test.jsx
+npm run test --workspace server -- --runTestsByPath test/inbox.test.js test/realtime.test.js
+```
+
+React tests cover status views, claim/conflict, full-history controls, live updates, listener integration, keyboard focus, drafts and closure. API/socket tests cover scoped lists, authorization, unread state, cursor history and live notifications. Tests use disposable replica sets and do not load the application's private Atlas URI.
+
+Targeted verification for this submission: **11 React inbox tests and 53 inbox/socket integration tests passed** (64 targeted checks). The socket total includes the ack-before-publication rejection regression.
+
+### Submission note
+
+I implemented the Hilltop agent inbox with status-based chat lists, atomic self-assignment, complete saved history through older-message paging, and real-time conversation/list updates. The challenging parts were preventing duplicate events during reconnects, preserving drafts while switching chats, and protecting private history before assignment. The README includes setup and agent usage steps. Typing indicators and deployment are outside this Task 3 submission.
 
 ## Local setup
 
@@ -176,28 +207,6 @@ All paths below use the browser's `/api` prefix; equivalent unprefixed routes ar
 
 Errors use `{ message }`: 400 invalid data, 401 invalid session, 403 forbidden role/origin, 404 missing/inaccessible chat, 409 conflict/closed chat, 413 oversized body, 429 rate limit, 503 bounded search timeout and sanitized 500 errors. Socket failures acknowledge `{ ok: false, status, message }`.
 
-## Manual Task 2 verification
+## Additional messaging documentation
 
-1. Start both services and confirm database readiness. Register a guest and start a conversation.
-2. Open a separate browser profile, sign in as the provisioned agent and select the conversation from Waiting queue. Before assignment, message history must stay private. Click **Assign to me**.
-3. Send messages in both directions. Each should appear without Refresh, and both sessions should show a live connection.
-4. Reload the pages. Saved messages should return from MongoDB. Open the guest conversation in another tab to check participant room broadcasts.
-5. Disconnect one client, send from the other, then reconnect. Missed persisted messages should recover without duplicate entries.
-6. Sign in as a different guest or unassigned second agent. Knowing the chat ID must not grant room, history or send access.
-7. Sign out or close the conversation. Revoked sessions lose socket access; closed conversations reject fresh sends.
-
-## Automated Task 2 tests
-
-```sh
-npm run test --workspace server -- --runTestsByPath test/realtime.test.js
-```
-
-The socket integration suite covers shared HTTP/polling setup, authenticated private rooms, committed delivery, outsider exclusion, REST-to-socket broadcast, retry deduplication, room leave/switching, session revocation/expiry, rate limits and recovery of more than 20 missed messages. Tests start a disposable MongoDB replica set; they do not read `.env` or use the application's Atlas URI. The first run may download a MongoDB binary.
-
-The documented Task 2 command was rerun during this README correction: **31 socket integration tests passed**.
-
-For the wider regression suite, run `npm run test:coverage`. Recorded CI and real Atlas checks from 31 October 2026 are available in [ci-results.json](docs/ci-results.json) and [atlas-browser-results.json](docs/atlas-browser-results.json); those records are dated evidence, not a fresh execution claim.
-
-## Review notes
-
-This README documents the Task 2 implementation and how to run it. The repository contains additional inbox/history functionality, which is not required to assess the real-time messaging work. Socket limits are process-local (60 acknowledged actions/minute/user, 10 concurrent connections per observed IP, 10 KB packets); scaling needs a shared adapter/limiter and reviewed proxy handling. Existing security details, including the recorded development-only dependency exception, are in [SECURITY.md](docs/SECURITY.md).
+For the accepted Task 2 manual checks, socket integration command and persistence/delivery details, see [Task 2 notes](docs/TASK2.md). Existing dated CI/browser reports are in docs; new targeted verification is reported with this Task 3 submission.
